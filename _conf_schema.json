@@ -1,0 +1,8 @@
+{
+    "savePath": {
+        "description": "savePath",
+        "type": "string",
+        "hint": "输入你要存储的绝对位置哦~",
+        "obvious_hint": true
+    }
+}
