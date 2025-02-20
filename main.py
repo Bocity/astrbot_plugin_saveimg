@@ -43,8 +43,8 @@ class SaveImg(Star):
                     f.write(await resp.read())
                 return f"{filename}.jpg"
 
-    # 处理"搜图"命令
-    @command("开启保存")
+    # 处理"保存"命令
+    @command("保存")
     async def save_image(self, event: AstrMessageEvent):
         # 如果未配置API Key，提醒用户
         if not self.save_path:
@@ -54,13 +54,16 @@ class SaveImg(Star):
         USER_STATES[user_id] = time.time()  # 记录用户请求的时间
         yield event.plain_result("杂鱼~还得靠我呢!把你要存的东西都交给我吧yo~")  # 提示用户发送图片
 
-    # 处理"搜图"命令
+    # 处理"退出保存"命令
     @command("退出保存")
     async def exit_image(self, event: AstrMessageEvent):
         # 如果超时，删除用户状态并通知用户
+        user_id = event.get_sender_id()  # 获取用户ID
         if user_id in USER_STATES:
             del USER_STATES[user_id]
             yield event.plain_result("不帮你保存了哦，杂鱼~")
+        else
+            yield event.plain_result("杂鱼~你没有保存哦")
 
      # 处理所有消息类型的事件
     @event_message_type(EventMessageType.ALL)
