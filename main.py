@@ -273,7 +273,7 @@ class SaveImg(Star):
             try:
                 for comp in event.message_obj.message:
                     if isinstance(comp, Video):
-                        video_url = comp.path if comp.path else comp.file
+                        video_url = comp.url if comp.url else comp.path
                         if video_url.startswith("http"):
                             video_path = await self.download_file(video_url, self.save_path, f"video_{saveTime}_{idx}.mp4")
                             idx += 1

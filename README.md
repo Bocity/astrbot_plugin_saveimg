@@ -1,10 +1,16 @@
-# helloworld
+# AstrBot 的保存图片插件
+首先需要配置在AstrBot安装的宿主机的绝对路径，并保证权限
+（docker下需要自行做好映射）
+当前限制仅能私聊
 
-AstrBot 插件模板
+> [!TIP]
+> 输入保存进入保存模式，之后所有的图片都会帮你保存下来
+> 输入不保存退出保存模式
 
-A template plugin for AstrBot plugin feature
 
-# 支持
+✨嵌套消息图片已支持
 
-[帮助文档](https://astrbot.soulter.top/center/docs/%E5%BC%80%E5%8F%91/%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91/
-)
+![](sample.png)
+# TODO
+- 支持视频（单个视频已支持，嵌套消息视频暂不支持）
+- 支持其他文件
