@@ -12,12 +12,13 @@ import shutil
 # 用于跟踪每个用户的状态，防止超时或重复请求
 USER_STATES: Dict[str, Optional[float]] = {}
 
-@register("saveImg", "Bocity", "这是 AstrBot 的保存图片插件，可以帮你保存你想存储的图片。", "1.0.0", "https://github.com/Bocity/astrbot_plugin_saveimg")
+@register("saveImg", "Bocity", "这是 AstrBot 的保存图片插件，可以帮你保存你想存储的图片。", "1.1.0", "https://github.com/Bocity/astrbot_plugin_saveimg")
 class SaveImg(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
         self.config = config
         self.save_path = config.get("savePath", "")  # 获取配置中的保存路径
+        self.qq_path = config.get("QQPath","")
         self.user_file_msg_buffer = defaultdict(list)
     
     async def download_file(self, image_url: str, workplace_path: str, filename: str) -> str:
@@ -86,7 +87,9 @@ class SaveImg(Star):
                         # 视频处理
                         elif comp.get('type') == 'video':
                             video_data = comp.get('data', {})
-                            video_url = video_data.get('path')
+                            tmp_path = video_data.get('path')
+                            tmp_url = video_data.get('url')
+                            video_url = tmp_url if tmp_url else tmp_path
                             if video_url:
                                 tasks.append({
                                     "type": "video",
@@ -108,11 +111,13 @@ class SaveImg(Star):
             return tasks
 
         try:
+            logger.info(f"处理消息: {messages}")
             # 收集所有媒体任务
             all_tasks = recursive_collect(messages)
             if not all_tasks:
+                logger.info("没有找到可以保存的内容")
                 return []
-
+            logger.info(f"所有任务: {all_tasks}")
             # 并行处理下载
             download_coros = []
             for task in all_tasks:
@@ -127,11 +132,8 @@ class SaveImg(Star):
                     )
                 # 本地文件复制
                 elif task['url'].startswith('/'):
-                    payloads = {
-                        "file": task['file'],
-                    }
-                    ret = await client.api.call_action('get_file', **payloads)
-                    logger.info(f"文件详细内容: {ret}")
+                    ret = await client.api.call_action('get_file', file=task['file'])
+                    logger.info(f"文件详细内容: {ret} file:{task['file']}")
                     download_coros.append(
                         self.copy_local_file(
                             task['url'],
@@ -180,7 +182,8 @@ class SaveImg(Star):
         else:
             yield event.plain_result("杂鱼~你没有保存哦")
 
-     # 处理所有消息类型的事件
+     # 处理AIOCQHTTP的私聊消息类型的事件
+    @platform_adapter_type(PlatformAdapterType.AIOCQHTTP)
     @event_message_type(EventMessageType.PRIVATE_MESSAGE)
     async def on_private_message(self, event: AstrMessageEvent):
         user_id = event.get_sender_id()  # 获取发送者的ID
@@ -190,8 +193,8 @@ class SaveImg(Star):
         if not self.save_path:
             yield event.plain_result("杂鱼♥还没告诉姐姐保存到哪里哦~")
             return
-        logger.info(event.message_obj.raw_message) # 平台下发的原始消息在这里
-        logger.info(event.message_obj.message) # AstrBot 解析出来的消息链内容
+        logger.info(f'杂鱼这是原始消息{event.message_obj.raw_message}') # 平台下发的原始消息在这里
+        logger.info(f'杂鱼这是解析消息{event.message_obj.message}') # 平台下发解析消息在这里
         ForwardFlag = 0
         for comp in event.message_obj.message:
             if isinstance(comp, Forward):
@@ -227,7 +230,34 @@ class SaveImg(Star):
                     logger.error(f"处理失败: {traceback.format_exc()}")
                     yield event.plain_result("呜...保存失败了，杂鱼程序员快检查日志！")
             return
-
+        
+#   [07:18:13| DEBUG] [aiocqhttp_platform_adapter.py:50]: [aiocqhttp] RawMessage <Event, {'self_id': 1520517773, 'user_id': 1021846662, 'time': 1740381492, 'message_id': 377431432, 'message_seq': 377431432, 'real_id': 377431432, 'message_type': 'private', 'sender': {'user_id': 1021846662, 'nickname': 'Bocity', 'card': ''}, 'raw_message': '[CQ:file,file=7ea35fb518d04b7f83753e4e06aa00d3.mp4,file_id=8624e83cf95b09df4de35ea1c783c368_7b19996e-f27f-11ef-9d13-6f9b0a08d856,file_size=1841604]', 'font': 14, 'sub_type': 'friend', 'message': [{'type': 'file', 'data': {'file': '7ea35fb518d04b7f83753e4e06aa00d3.mp4', 'file_id': '8624e83cf95b09df4de35ea1c783c368_7b19996e-f27f-11ef-9d13-6f9b0a08d856', 'file_size': '1841604'}}], 'message_format': 'array', 'post_type': 'message', 'target_id': 1021846662, 'raw': {'msgId': '7474881595865519511', 'msgRandom': '1111139745', 'msgSeq': '1323', 'cntSeq': '0', 'chatType': 1, 'msgType': 3, 'subMsgType': 4, 'sendType': 0, 'senderUid': 'u_TjT3omycF1caYj8Fq8EmlA', 'peerUid': 'u_TjT3omycF1caYj8Fq8EmlA', 'channelId': '', 'guildId': '', 'guildCode': '0', 'fromUid': '0', 'fromAppid': '0', 'msgTime': '1740381492', 'msgMeta': {}, 'sendStatus': 2, 'sendRemarkName': '', 'sendMemberName': '', 'sendNickName': '', 'guildName': '', 'channelName': '', 'elements': [{'elementType': 3, 'elementId': '7474881595865519510', 'elementGroupId': 0, 'extBufForUI': {}, 'textElement': None, 'faceElement': None, 'marketFaceElement': None, 'replyElement': None, 'picElement': None, 'pttElement': None, 'videoElement': None, 'grayTipElement': None, 'arkElement': None, 'fileElement': {'fileMd5': '', 'fileName': '7ea35fb518d04b7f83753e4e06aa00d3.mp4', 'filePath': '', 'fileSize': '1841604', 'picHeight': 960, 'picWidth': 540, 'picThumbPath': {}, 'expireTime': '1740986281', 'file10MMd5': 'a589923b57bf555e8d11065ad2b5402c', 'fileSha': '', 'fileSha3': '', 'videoDuration': 0, 'transferStatus': 1, 'progress': 0, 'invalidState': 0, 'fileUuid': '8624e83cf95b09df4de35ea1c783c368_7b19996e-f27f-11ef-9d13-6f9b0a08d856', 'fileSubId': 'D6EAT0nLCIbJoOcDEhTicyZHpGNkibsczmIasIyZ1ONU7LexjEs3AgoR8oqbrwvQYwicbXoAziae4IrrCEADSAEY', 'thumbFileSize': 0, 'fileBizId': None, 'thumbMd5': None, 'folderId': None, 'fileGroupIndex': 0, 'fileTransType': None, 'subElementType': 2, 'storeID': 0}, 'liveGiftElement': None, 'markdownElement': None, 'structLongMsgElement': None, 'multiForwardMsgElement': None, 'giphyElement': None, 'walletElement': None, 'inlineKeyboardElement': None, 'textGiftElement': None, 'calendarElement': None, 'yoloGameResultElement': None, 'avRecordElement': None, 'structMsgElement': None, 'faceBubbleElement': None, 'shareLocationElement': None, 'tofuRecordElement': None, 'taskTopMsgElement': None, 'recommendedMsgElement': None, 'actionBarElement': None, 'prologueMsgElement': None, 'forwardMsgElement': None}], 'records': [], 'emojiLikesList': [], 'commentCnt': '0', 'directMsgFlag': 0, 'directMsgMembers': [], 'peerName': '', 'freqLimitInfo': None, 'editable': False, 'avatarMeta': '', 'avatarPendant': '', 'feedId': '', 'roleId': '0', 'timeStamp': '0', 'clientIdentityInfo': None, 'isImportMsg': False, 'atType': 0, 'roleType': 0, 'fromChannelRoleInfo': {'roleId': '0', 'name': '', 'color': 0}, 'fromGuildRoleInfo': {'roleId': '0', 'name': '', 'color': 0}, 'levelRoleInfo': {'roleId': '0', 'name': '', 'color': 0}, 'recallTime': '0', 'isOnlineMsg': True, 'generalFlags': {}, 'clientSeq': '4139', 'fileGroupSize': None, 'foldingInfo': None, 'multiTransInfo': None, 'senderUin': '1021846662', 'peerUin': '1021846662', 'msgAttrs': {}, 'anonymousExtInfo': None, 'nameType': 0, 'avatarFlag': 0, 'extInfoForUI': None, 'personalMedal': None, 'categoryManage': 0, 'msgEventInfo': None, 'sourceType': 1, 'id': 377431432}}>
+        # 文件
+        try:
+            files = []
+            client = event.bot # 得到 client
+            for comp in event.message_obj.raw_message.get('message', []):
+                logger.info(f"原始文件消息: {comp}")
+                if comp.get('type') == 'file':
+                    if not self.qq_path:
+                        yield event.plain_result("杂鱼♥还没告诉姐姐QQ在哪里哦~")
+                        return
+                    fileid = comp['data']['file_id']
+                    # filen = comp['data']['file']
+                    ret = await client.api.call_action('get_file', file_id = fileid) # 调用 协议端  API
+                    logger.info(f"下载文件消息: {ret}")
+                    file_name = os.path.basename(ret['url'])
+                    file_path = os.path.join(self.qq_path, "NapCat/temp")
+                    file_path = os.path.join(file_path, file_name)
+                    shutil.copy(file_path, os.path.join(self.save_path, file_name))
+                    files.append(file_name)
+                    logger.info(f"保存成功: {files}")
+                    yield event.plain_result("文件帮你存下来了哦~杂鱼~")
+                    return 
+        except Exception as e:  # 捕获异常并返回错误信息
+                logger.info(f"保存失败: {str(e)}")
+                yield event.plain_result("文件保存失败了哦，杂鱼程序员又写bug了！")
+        
             
         # 检查消息中是否包含图片
         imgFlag = 0

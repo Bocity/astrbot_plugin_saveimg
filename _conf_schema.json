@@ -4,5 +4,11 @@
         "type": "string",
         "hint": "输入你要存储的绝对位置哦~",
         "obvious_hint": true
+    },
+    "QQPath": {
+        "description": "QQPath",
+        "type": "string",
+        "hint": "输入napcat的QQ绝对位置~",
+        "obvious_hint": true
     }
 }
