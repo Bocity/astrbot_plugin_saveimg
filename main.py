@@ -152,7 +152,6 @@ class SaveImg(Star):
                         "type": task['type'],
                         "path": result
                     })
-            
             return success_files
 
         except Exception as e:
@@ -227,7 +226,7 @@ class SaveImg(Star):
                         yield event.plain_result("没有找到可以保存的内容呢，笨蛋！")
                     
                 except Exception as e:
-                    logger.error(f"处理失败: {traceback.format_exc()}")
+                    logger.error(f"处理失败: {str(e)}")
                     yield event.plain_result("呜...保存失败了，杂鱼程序员快检查日志！")
             return
         
