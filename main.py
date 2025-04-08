@@ -12,7 +12,7 @@ import shutil
 # 用于跟踪每个用户的状态，防止超时或重复请求
 USER_STATES: Dict[str, Optional[float]] = {}
 
-@register("saveImg", "Bocity", "这是 AstrBot 的保存图片插件，可以帮你保存你想存储的图片。", "1.1.0", "https://github.com/Bocity/astrbot_plugin_saveimg")
+@register("saveImg", "Bocity", "[仅aiocqhttp]这是 AstrBot 的保存图片插件，可以帮你保存你想存储的图片。", "1.1.0", "https://github.com/Bocity/astrbot_plugin_saveimg")
 class SaveImg(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)

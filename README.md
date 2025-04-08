@@ -1,4 +1,4 @@
-# AstrBot 的保存图片插件
+# [仅aiocqhttp]AstrBot 的保存图片插件
 首先需要配置在AstrBot安装的宿主机的绝对路径，并保证权限
 还需配置NapCat的QQ路径，以保存文件
 （docker下需要自行做好映射）
